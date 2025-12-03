@@ -1,0 +1,20 @@
+[project]
+name = "test-app"
+version = "1.0.0"
+description = ""
+authors = [
+    {name = "gleb",email = "deffender1337@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pytest (>=9.0.1,<10.0.0)",
+    "streamlit (>=1.51.0,<2.0.0)",
+    "pandas (>=2.3.3,<3.0.0)",
+    "pydantic (>=2.12.5,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
