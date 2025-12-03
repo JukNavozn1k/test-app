@@ -120,33 +120,35 @@ def display_question(question, question_index: int, user_answers: Dict[int, List
     options = question.options
     
     if question.type == QuestionType.SINGLE:
+        # Определяем индекс выбранного ответа, если он есть
+        default_index = None
+        if st.session_state[answer_key]:
+            default_index = st.session_state[answer_key][0]
+        
         selected_option = st.radio(
             "Ваш ответ:",
             options=options,
             key=f"radio_{question_index}",
-            index=None if not st.session_state[answer_key] else st.session_state[answer_key][0]
+            index=default_index
         )
         
         if selected_option:
             selected_index = options.index(selected_option)
             st.session_state[answer_key] = [selected_index]
             user_answers[question_index] = [selected_index]
+        elif st.session_state[answer_key]:
+            # Если ответ уже был выбран, но сейчас radio не выбрано (редкий случай)
+            user_answers[question_index] = st.session_state[answer_key]
     else:  # MULTIPLE
         selected_indices = []
         for i, option in enumerate(options):
             checkbox_key = f"check_{question_index}_{i}"
             
-            # Инициализируем состояние чекбокса
-            if checkbox_key not in st.session_state:
-                st.session_state[checkbox_key] = False
+            # Проверяем, был ли этот вариант уже выбран
+            is_checked = i in st.session_state[answer_key]
             
-            is_checked = st.checkbox(
-                option,
-                key=checkbox_key,
-                value=st.session_state[checkbox_key]
-            )
-            
-            if is_checked:
+            # Отображаем чекбокс с текущим состоянием
+            if st.checkbox(option, key=checkbox_key, value=is_checked):
                 selected_indices.append(i)
         
         st.session_state[answer_key] = selected_indices
@@ -157,7 +159,11 @@ def display_question(question, question_index: int, user_answers: Dict[int, List
 
 def show_results(result: TestResult, test: Test):
     """Показать результаты теста"""
-    st.balloons() if result.passed else st.snow()
+    # Показываем анимацию в зависимости от результата
+    if result.passed:
+        st.balloons()
+    else:
+        st.snow()
     
     st.header("📊 Результаты теста")
     
@@ -216,14 +222,26 @@ def show_results(result: TestResult, test: Test):
                 st.info(f"💡 **Пояснение:** {answer_detail['explanation']}")
     
     # Кнопки действий
+    st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
         if st.button("🔄 Пройти тест еще раз", type="primary", use_container_width=True):
+            # Сброс состояния для повторного прохождения теста
             st.session_state.test_started = False
-            st.session_state.current_test = None
+            st.session_state.test_completed = False
             st.session_state.current_question = 0
             st.session_state.user_answers = {}
+            
+            # Очистка состояний ответов
+            keys_to_delete = []
+            for key in st.session_state.keys():
+                if key.startswith('q_') or key.startswith('radio_') or key.startswith('check_'):
+                    keys_to_delete.append(key)
+            
+            for key in keys_to_delete:
+                del st.session_state[key]
+            
             st.rerun()
 
 
@@ -282,13 +300,6 @@ def main():
                     "options": ["Список", "Словарь", "Кортеж", "Множество"],
                     "correct_answers": [2],
                     "explanation": "Кортеж (tuple) является неизменяемым типом данных"
-                },
-                {
-                    "text": "Какие из перечисленных операторов используются для циклов?",
-                    "type": "multiple",
-                    "options": ["for", "while", "loop", "repeat"],
-                    "correct_answers": [0, 1],
-                    "explanation": "В Python используются операторы for и while"
                 }
             ]
         }
@@ -343,12 +354,6 @@ def main():
             - Два типа вопросов: с одним и несколькими ответами
             - Детализированные результаты с пояснениями
             - История прохождения тестов
-            
-            **Как начать:**
-            1. Перейдите в раздел "Пройти тест"
-            2. Выберите тест из списка
-            3. Ответьте на все вопросы
-            4. Получите детализированный результат
             """)
         
         with col2:
@@ -554,6 +559,8 @@ def main():
             result = calculate_results(test, final_answers)
             
             # Сохраняем результат
+            if 'test_results' not in st.session_state:
+                st.session_state.test_results = []
             st.session_state.test_results.append(result)
             
             # Показываем результаты
