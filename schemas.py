@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, validator
-from typing import List, Literal, Optional
+from typing import List, Optional
 from enum import Enum
 
 
@@ -39,7 +39,6 @@ class Test(BaseModel):
     name: str = Field(..., description="Название теста")
     description: str = Field(..., description="Описание теста")
     questions: List[Question] = Field(..., min_items=1, description="Список вопросов")
-    time_limit: Optional[int] = Field(None, description="Ограничение по времени в минутах")
     passing_score: int = Field(80, ge=0, le=100, description="Проходной балл в процентах")
 
 

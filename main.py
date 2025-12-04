@@ -131,7 +131,7 @@ def show_results(result: TestResult, test: Test):
     st.header("📊 Результаты теста")
     
     # Отображение основной статистики
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         st.metric("Правильных ответов", f"{result.score}/{result.max_score}")
@@ -140,9 +140,6 @@ def show_results(result: TestResult, test: Test):
         st.metric("Процент", f"{result.percentage:.1f}%")
     
     with col3:
-        st.metric("Проходной балл", f"{test.passing_score}%")
-    
-    with col4:
         if result.passed:
             st.success("✅ Тест сдан!")
         else:
@@ -295,9 +292,6 @@ def main():
                         questions_with_explanation = sum(1 for q in test.questions if q.explanation)
                         if questions_with_explanation > 0:
                             st.write(f"**Вопросов с пояснениями:** {questions_with_explanation}")
-                        
-                        if test.time_limit:
-                            st.write(f"**Ограничение по времени:** {test.time_limit} мин.")
     
     # Страница прохождения теста
     if not st.session_state.test_started and tab2:
@@ -322,21 +316,15 @@ def main():
                 st.subheader(f"Тест: {test.name}")
                 st.write(test.description)
                 
+                # Статистика теста
                 col1, col2, col3 = st.columns(3)
                 with col1:
                     st.metric("Вопросов", len(test.questions))
                 with col2:
                     st.metric("Проходной балл", f"{test.passing_score}%")
                 with col3:
-                    if test.time_limit:
-                        st.metric("Время", f"{test.time_limit} мин")
-                    else:
-                        st.metric("Время", "Без ограничений")
-                
-                # Информация о пояснениях
-                questions_with_explanation = sum(1 for q in test.questions if q.explanation)
-                if questions_with_explanation > 0:
-                    st.info(f"📝 В этом тесте {questions_with_explanation} вопросов с пояснениями к ответам")
+                    questions_with_explanation = sum(1 for q in test.questions if q.explanation)
+                    st.metric("С пояснениями", questions_with_explanation)
                 
                 # Настройки теста (только перемешивание)
                 st.subheader("⚙️ Настройки теста")
@@ -369,7 +357,7 @@ def main():
                     
                     st.rerun()
     
-    # Прохождение теста (без табов)
+    # Прохождение теста (без табы)
     elif st.session_state.test_started and not st.session_state.test_completed:
         test = st.session_state.tests.get(st.session_state.current_test)
         
