@@ -237,9 +237,6 @@ def main():
     if 'shuffled_indices' not in st.session_state:
         st.session_state.shuffled_indices = None
     
-    if 'shuffle_enabled' not in st.session_state:
-        st.session_state.shuffle_enabled = False
-    
     # Навигация через табы
     if not st.session_state.test_started:
         tab1, tab2 = st.tabs(["🏠 Главная", "🧪 Пройти тест"])
@@ -294,6 +291,11 @@ def main():
                         st.write(f"**Количество вопросов:** {len(test.questions)}")
                         st.write(f"**Проходной балл:** {test.passing_score}%")
                         
+                        # Показываем количество вопросов с пояснениями
+                        questions_with_explanation = sum(1 for q in test.questions if q.explanation)
+                        if questions_with_explanation > 0:
+                            st.write(f"**Вопросов с пояснениями:** {questions_with_explanation}")
+                        
                         if test.time_limit:
                             st.write(f"**Ограничение по времени:** {test.time_limit} мин.")
     
@@ -331,15 +333,14 @@ def main():
                     else:
                         st.metric("Время", "Без ограничений")
                 
-                # Настройки теста
-                st.subheader("⚙️ Настройки теста")
-                col1, col2 = st.columns(2)
-                with col1:
-                    shuffle = st.checkbox("Перемешать вопросы", value=False, key="shuffle_checkbox")
-                with col2:
-                    show_explanations = st.checkbox("Показывать пояснения", value=True, key="explanations_checkbox")
+                # Информация о пояснениях
+                questions_with_explanation = sum(1 for q in test.questions if q.explanation)
+                if questions_with_explanation > 0:
+                    st.info(f"📝 В этом тесте {questions_with_explanation} вопросов с пояснениями к ответам")
                 
-                st.session_state.shuffle_enabled = shuffle
+                # Настройки теста (только перемешивание)
+                st.subheader("⚙️ Настройки теста")
+                shuffle = st.checkbox("Перемешать вопросы", value=False, key="shuffle_checkbox")
                 
                 if st.button("▶️ Начать тест", type="primary", use_container_width=True):
                     # Инициализация теста
